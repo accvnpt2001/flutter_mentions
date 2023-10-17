@@ -30,7 +30,8 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
-  GlobalKey<FlutterMentionsState> key = GlobalKey<FlutterMentionsState>();
+  final controller =
+      AnnotationEditingController(TextStyle(color: Colors.amber));
   bool showSuggestions = false;
   List<Map<String, dynamic>> users = [];
 
@@ -114,15 +115,14 @@ class _MyHomePageState extends State<MyHomePage> {
                     );
                   },
                   onTap: (value) {
-                    key.currentState!.controller!.addMention(value);
+                    controller.addMention(value);
                   },
                 ))
               : Container(),
           ElevatedButton(
             child: Text('Change Mentions'),
             onPressed: () {
-              debugPrint(
-                  'outputText = ${key.currentState!.controller!.outputText}');
+              debugPrint('outputText = ${controller.outputText}');
               setState(() {
                 users = [
                   {
@@ -166,7 +166,7 @@ class _MyHomePageState extends State<MyHomePage> {
           ),
           Container(
             child: FlutterMentions(
-              key: key,
+              controller: controller,
               suggestionPosition: SuggestionPosition.Top,
               maxLines: 5,
               minLines: 1,
