@@ -3,92 +3,101 @@ part of flutter_mentions;
 /// A custom implementation of [TextEditingController] to support @ mention or other
 /// trigger based mentions.
 class AnnotationEditingController extends TextEditingController {
-  Map<String, Annotation> _mapping;
+  TextStyle mentionStyle;
+  List<Map<String, dynamic>> taggedUsers = [];
   String? _pattern;
 
-  // Generate the Regex pattern for matching all the suggestions in one.
-  AnnotationEditingController(this._mapping)
-      : _pattern = _mapping.keys.isNotEmpty
-            ? "(${_mapping.keys.map((key) => RegExp.escape(key)).join('|')})"
-            : null;
+  String? outputText;
 
-  /// Can be used to get the markup from the controller directly.
-  String get markupText {
-    final someVal = _mapping.isEmpty
-        ? text
-        : text.splitMapJoin(
-            RegExp('$_pattern'),
-            onMatch: (Match match) {
-              final mention = _mapping[match[0]!] ??
-                  _mapping[_mapping.keys.firstWhere((element) {
-                    final reg = RegExp(element);
+  AnnotationEditingController(this.mentionStyle);
 
-                    return reg.hasMatch(match[0]!);
-                  })]!;
+  Function(Map<String, dynamic> value)? _addMentionCallback;
 
-              // Default markup format for mentions
-              if (!mention.disableMarkup) {
-                return mention.markupBuilder != null
-                    ? mention.markupBuilder!(
-                        mention.trigger, mention.id!, mention.display!)
-                    : '${mention.trigger}[__${mention.id}__](__${mention.display}__)';
-              } else {
-                return match[0]!;
-              }
-            },
-            onNonMatch: (String text) {
-              return text;
-            },
-          );
-
-    return someVal;
+  void registerAddMentionCallback(
+      Function(Map<String, dynamic> value) callback) {
+    _addMentionCallback = callback;
   }
 
-  Map<String, Annotation> get mapping {
-    return _mapping;
+  void addMention(Map<String, dynamic> value) {
+    _addMentionCallback?.call(value);
   }
 
-  set mapping(Map<String, Annotation> _mapping) {
-    this._mapping = _mapping;
+  void processAddMention(
+      Map<String, dynamic> taggedUser, int startPos, String searchText) {
+    final user = taggedUser.map((key, value) => MapEntry(key, value));
+    user['start'] = startPos;
+    taggedUsers.add(user);
+    updatePattern();
+    final offset = 1 + taggedUser['display']?.length as int? ?? 0;
+    updateMentionPositions(startPos, offset - searchText.length + 1);
+  }
 
-    _pattern = "(${_mapping.keys.map((key) => RegExp.escape(key)).join('|')})";
+  void updateMentionPositions(int currentPost, int offset) {
+    taggedUsers.forEach((taggedUser) {
+      if (taggedUser['start'] > currentPost) {
+        taggedUser['start'] = taggedUser['start'] + offset;
+      }
+    });
+  }
+
+  void updatePattern() {
+    if (taggedUsers.isEmpty) {
+      return;
+    }
+    final taggedUserString =
+        taggedUsers.map((e) => '@' + e['display']).toList().join('|');
+    _pattern = taggedUserString;
   }
 
   @override
-  TextSpan buildTextSpan({BuildContext? context, TextStyle? style, bool? withComposing}) {
+  TextSpan buildTextSpan(
+      {BuildContext? context, TextStyle? style, bool? withComposing}) {
     var children = <InlineSpan>[];
+    var postedTexts = <String>[];
 
     if (_pattern == null || _pattern == '()') {
       children.add(TextSpan(text: text, style: style));
+      postedTexts.add(text);
     } else {
       text.splitMapJoin(
         RegExp('$_pattern'),
         onMatch: (Match match) {
-          if (_mapping.isNotEmpty) {
-            final mention = _mapping[match[0]!] ??
-                _mapping[_mapping.keys.firstWhere((element) {
-                  final reg = RegExp(element);
-
-                  return reg.hasMatch(match[0]!);
-                })]!;
-
-            children.add(
-              TextSpan(
-                text: match[0],
-                style: style!.merge(mention.style),
-              ),
-            );
+          if (taggedUsers.isNotEmpty) {
+            var element = match[0]!;
+            element = element.substring(1);
+            final first = taggedUsers.firstWhere(
+                (e) => e['display'] == element && e['start'] == match.start,
+                orElse: () => {'display': null});
+            if (first['display'] != null && first['start'] == match.start) {
+              children.add(
+                TextSpan(
+                  text: match[0],
+                  style: mentionStyle,
+                ),
+              );
+              postedTexts.add('[${first['id']}]');
+            } else {
+              children.add(
+                TextSpan(
+                  text: match[0],
+                  style: style,
+                ),
+              );
+              postedTexts.add(match[0] ?? '');
+            }
           }
 
           return '';
         },
         onNonMatch: (String text) {
           children.add(TextSpan(text: text, style: style));
+          postedTexts.add(text);
           return '';
         },
       );
     }
 
+    outputText = postedTexts.join();
     return TextSpan(style: style, children: children);
   }
 }
