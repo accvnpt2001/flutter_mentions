@@ -310,8 +310,17 @@ class FlutterMentionsState extends State<FlutterMentions> {
         widget.onSuggestionVisibleChanged!(val != -1);
       }
 
+      LengthMap? currentLengthMap;
+      if (val != -1) {
+        final map = lengthMap[val];
+        final index = map.str.indexOf(trigger);
+        final sub = map.str.substring(index, map.str.length);
+        currentLengthMap =
+            LengthMap(start: index + map.start, end: map.end, str: sub);
+      }
+
       setState(() {
-        _selectedMention = val == -1 ? null : lengthMap[val];
+        _selectedMention = currentLengthMap;
       });
     }
   }
