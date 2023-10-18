@@ -9,6 +9,8 @@ class AnnotationEditingController extends TextEditingController {
 
   String? outputText;
 
+  var mentionIds = <dynamic>[];
+
   AnnotationEditingController(this.mentionStyle);
 
   Function(Map<String, dynamic> value)? _addMentionCallback;
@@ -62,6 +64,7 @@ class AnnotationEditingController extends TextEditingController {
       {BuildContext? context, TextStyle? style, bool? withComposing}) {
     var children = <InlineSpan>[];
     var postedTexts = <String>[];
+    var ids = <dynamic>[];
 
     if (_pattern == null || _pattern == '()') {
       children.add(TextSpan(text: text, style: style));
@@ -73,7 +76,6 @@ class AnnotationEditingController extends TextEditingController {
           if (taggedUsers.isNotEmpty) {
             var element = match[0]!;
             element = element.substring(1);
-            debugPrint('element: $element, start: ${match.start}');
             final first = taggedUsers.firstWhere(
                 (e) => e['display'] == element && e['start'] == match.start,
                 orElse: () => {'display': null});
@@ -84,7 +86,8 @@ class AnnotationEditingController extends TextEditingController {
                   style: mentionStyle,
                 ),
               );
-              postedTexts.add('[${first['id']}]');
+              postedTexts.add('[**${first['id']}**]');
+              ids.add(first['id']);
             } else {
               children.add(
                 TextSpan(
@@ -107,6 +110,7 @@ class AnnotationEditingController extends TextEditingController {
     }
 
     outputText = postedTexts.join();
+    mentionIds = ids;
     return TextSpan(style: style, children: children);
   }
 }

@@ -123,6 +123,7 @@ class _MyHomePageState extends State<MyHomePage> {
             child: Text('Change Mentions'),
             onPressed: () {
               debugPrint('outputText = ${controller.outputText}');
+              debugPrint('mentionIds = ${controller.mentionIds}');
               setState(() {
                 users = [
                   {
