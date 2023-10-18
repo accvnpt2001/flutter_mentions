@@ -29,12 +29,20 @@ class AnnotationEditingController extends TextEditingController {
     taggedUsers.add(user);
     updatePattern();
     final offset = 1 + taggedUser['display']?.length as int? ?? 0;
-    updateMentionPositions(startPos, offset - searchText.length + 1);
+    updatePositionsWhenAddNew(startPos, offset - searchText.length + 1);
+  }
+
+  void updatePositionsWhenAddNew(int currentPost, int offset) {
+    taggedUsers.forEach((taggedUser) {
+      if (taggedUser['start'] > currentPost) {
+        taggedUser['start'] = taggedUser['start'] + offset;
+      }
+    });
   }
 
   void updateMentionPositions(int currentPost, int offset) {
     taggedUsers.forEach((taggedUser) {
-      if (taggedUser['start'] > currentPost) {
+      if (taggedUser['start'] >= currentPost) {
         taggedUser['start'] = taggedUser['start'] + offset;
       }
     });
@@ -65,6 +73,7 @@ class AnnotationEditingController extends TextEditingController {
           if (taggedUsers.isNotEmpty) {
             var element = match[0]!;
             element = element.substring(1);
+            debugPrint('element: $element, start: ${match.start}');
             final first = taggedUsers.firstWhere(
                 (e) => e['display'] == element && e['start'] == match.start,
                 orElse: () => {'display': null});
