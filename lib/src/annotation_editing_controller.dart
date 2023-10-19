@@ -30,7 +30,7 @@ class AnnotationEditingController extends TextEditingController {
     user['start'] = startPos;
     taggedUsers.add(user);
     updatePattern();
-    final offset = 1 + taggedUser['display']?.length as int? ?? 0;
+    final offset = taggedUser['display']?.length as int? ?? 0;
     updatePositionsWhenAddNew(startPos, offset - searchText.length + 1);
   }
 
@@ -55,7 +55,7 @@ class AnnotationEditingController extends TextEditingController {
       return;
     }
     final taggedUserString =
-        taggedUsers.map((e) => '@' + e['display']).toList().join('|');
+        taggedUsers.map((e) => e['display']).toList().join('|');
     _pattern = taggedUserString;
   }
 
@@ -74,8 +74,7 @@ class AnnotationEditingController extends TextEditingController {
         RegExp('$_pattern'),
         onMatch: (Match match) {
           if (taggedUsers.isNotEmpty) {
-            var element = match[0]!;
-            element = element.substring(1);
+            final element = match[0]!;
             final first = taggedUsers.firstWhere(
                 (e) => e['display'] == element && e['start'] == match.start,
                 orElse: () => {'display': null});

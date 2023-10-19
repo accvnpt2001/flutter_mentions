@@ -270,14 +270,14 @@ class FlutterMentionsState extends State<FlutterMentions> {
     widget.controller!.text = widget.controller!.value.text.replaceRange(
       selectedMention.start,
       selectedMention.end,
-      "$trigger${value['display']}${widget.appendSpaceOnAdd ? ' ' : ''}",
+      "${value['display']}${widget.appendSpaceOnAdd ? ' ' : ''}",
     );
 
     if (widget.onMentionAdd != null) widget.onMentionAdd!(value);
 
     // Move the cursor to next position after the new mentioned item.
     var nextCursorPosition =
-        selectedMention.start + 1 + value['display']?.length as int? ?? 0;
+        selectedMention.start + value['display']?.length as int? ?? 0;
     if (widget.appendSpaceOnAdd) nextCursorPosition++;
     widget.controller!.selection =
         TextSelection.fromPosition(TextPosition(offset: nextCursorPosition));
